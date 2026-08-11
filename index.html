@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#060556" />
+<title>SPACE DOME — Difesa Stellare</title>
+<meta name="description" content="Difendi la cupola stellare! Un arcade spara-e-fuggi ispirato alla festa Space Dome, con potenziamenti incrementali e boss a forma di stella." />
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<canvas id="game-canvas"></canvas>
+<div id="hit-flash" class="hit-flash" aria-hidden="true"></div>
+
+<div id="hint-toast" class="hint-toast hidden"></div>
+
+<header id="hud" class="hud hidden">
+  <div class="hud-row">
+    <div class="hud-cluster">
+      <div class="hud-item" id="hud-score"><span class="hud-label">PUNTI</span><span class="hud-value" id="hud-score-value">0</span></div>
+      <div class="hud-item" id="hud-wave"><span class="hud-label">ONDATA</span><span class="hud-value" id="hud-wave-value">1</span></div>
+    </div>
+    <div class="hud-cluster hud-lives" id="hud-lives" aria-label="Vite rimanenti"></div>
+    <div class="hud-cluster">
+      <div class="hud-item hud-dust"><span class="dust-icon" aria-hidden="true"></span><span class="hud-value" id="hud-dust-value">0</span></div>
+      <button id="btn-pause" class="icon-btn" aria-label="Pausa">
+        <svg viewBox="0 0 24 24" width="20" height="20"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="combo-badge hidden" id="combo-badge">COMBO ×<span id="combo-value">1</span></div>
+</header>
+
+<button id="btn-bomb" class="bomb-btn hidden" aria-label="Attacco Supernova">
+  <svg class="bomb-ring" viewBox="0 0 64 64">
+    <circle class="track" cx="32" cy="32" r="29" />
+    <circle id="bomb-progress" class="progress" cx="32" cy="32" r="29" />
+  </svg>
+  <svg class="bomb-star" viewBox="0 0 24 24" width="26" height="26"><path d="M12 1 L14.5 9.5 L23 12 L14.5 14.5 L12 23 L9.5 14.5 L1 12 L9.5 9.5 Z" fill="currentColor"/></svg>
+</button>
+
+<div id="screen-menu" class="screen">
+  <div class="panel menu-panel">
+    <div class="brand">
+      <svg class="brand-star" viewBox="0 0 100 100" width="52" height="52" aria-hidden="true">
+        <path d="M50 2 L58 40 L92 32 L61 50 L92 68 L58 60 L50 98 L42 60 L8 68 L39 50 L8 32 L42 40 Z" fill="currentColor"/>
+      </svg>
+      <h1 class="brand-title">SPACE<span>DOME</span></h1>
+      <p class="brand-sub">DIFESA STELLARE</p>
+    </div>
+    <div class="menu-actions">
+      <button class="btn btn-primary" id="btn-play">GIOCA</button>
+      <button class="btn btn-secondary" id="btn-shop">POTENZIAMENTI</button>
+      <button class="btn btn-secondary" id="btn-settings">IMPOSTAZIONI</button>
+    </div>
+    <div class="menu-highscore">MIGLIOR PUNTEGGIO <strong id="menu-highscore-value">0</strong></div>
+  </div>
+</div>
+
+<div id="screen-settings" class="screen hidden">
+  <div class="panel">
+    <h2 class="panel-title">IMPOSTAZIONI</h2>
+    <div class="setting-row">
+      <label for="range-sfx">Effetti sonori</label>
+      <input type="range" id="range-sfx" min="0" max="100" value="80" />
+    </div>
+    <div class="setting-row">
+      <label for="range-music">Musica</label>
+      <input type="range" id="range-music" min="0" max="100" value="50" />
+    </div>
+    <div class="setting-row setting-row-toggle">
+      <label for="toggle-mute">Silenzia tutto</label>
+      <button class="toggle" id="toggle-mute" role="switch" aria-checked="false"><span class="toggle-knob"></span></button>
+    </div>
+    <div class="setting-row setting-row-toggle">
+      <label for="toggle-shake">Vibrazione schermo</label>
+      <button class="toggle" id="toggle-shake" role="switch" aria-checked="true"><span class="toggle-knob"></span></button>
+    </div>
+    <div class="setting-row setting-row-toggle">
+      <label for="toggle-haptics">Vibrazione dispositivo</label>
+      <button class="toggle" id="toggle-haptics" role="switch" aria-checked="true"><span class="toggle-knob"></span></button>
+    </div>
+    <button class="btn btn-ghost" id="btn-reset-progress">Azzera progressi</button>
+    <button class="btn btn-secondary" id="btn-settings-back">INDIETRO</button>
+  </div>
+</div>
+
+<div id="screen-shop" class="screen hidden">
+  <div class="panel shop-panel">
+    <h2 class="panel-title">POTENZIAMENTI PERMANENTI</h2>
+    <p class="shop-currency"><span class="dust-icon" aria-hidden="true"></span> <strong id="shop-dust-value">0</strong> Polvere Cosmica</p>
+    <div class="shop-list" id="shop-list"></div>
+    <button class="btn btn-secondary" id="btn-shop-back">INDIETRO</button>
+  </div>
+</div>
+
+<div id="screen-levelup" class="screen hidden">
+  <div class="panel levelup-panel">
+    <h2 class="panel-title">POTENZIAMENTO!</h2>
+    <p class="levelup-sub">Scegli un miglioramento per questa partita</p>
+    <div class="levelup-cards" id="levelup-cards"></div>
+  </div>
+</div>
+
+<div id="screen-pause" class="screen hidden">
+  <div class="panel">
+    <h2 class="panel-title">PAUSA</h2>
+    <div class="menu-actions">
+      <button class="btn btn-primary" id="btn-resume">RIPRENDI</button>
+      <button class="btn btn-secondary" id="btn-pause-settings">IMPOSTAZIONI</button>
+      <button class="btn btn-ghost" id="btn-quit">ESCI AL MENU</button>
+    </div>
+  </div>
+</div>
+
+<div id="screen-gameover" class="screen hidden">
+  <div class="panel">
+    <h2 class="panel-title panel-title-danger">MISSIONE TERMINATA</h2>
+    <div class="gameover-stats">
+      <div class="stat-row"><span>Punteggio</span><strong id="go-score">0</strong></div>
+      <div class="stat-row"><span>Ondata raggiunta</span><strong id="go-wave">1</strong></div>
+      <div class="stat-row"><span>Polvere raccolta</span><strong id="go-dust">0</strong></div>
+      <div class="stat-row stat-row-highlight hidden" id="go-highscore-row"><span>NUOVO RECORD!</span><strong></strong></div>
+    </div>
+    <div class="menu-actions">
+      <button class="btn btn-primary" id="btn-retry">RIGIOCA</button>
+      <button class="btn btn-secondary" id="btn-gameover-menu">MENU</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
